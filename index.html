@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,10 +20,46 @@
         input { background: none; border: none; border-bottom: 2px solid #e2b714; color: #fff; font-size: 1.5rem; text-align: center; outline: none; width: 300px; }
         .stats { margin-top: 25px; font-size: 1.2rem; color: #646669; }
         span { color: #e2b714; }
-        .controls { margin-top: 15px; display:flex; gap:10px; align-items:center; }
+        .controls { margin-top: 15px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:center; max-width:1100px; padding:0 10px; }
         button { background:#e2b714; color:#1f1f1f; border:none; padding:8px 12px; cursor:pointer; border-radius:4px; font-weight:bold; }
         button:disabled { opacity:0.5; cursor:not-allowed; }
         .highscore { margin-left:10px; color:#646669; }
+        /* Mobile responsive - font and spacing adjustments */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; margin-bottom: 8px; }
+            #word-display { font-size: 1.8rem; margin-bottom: 12px; }
+            input { font-size: 1.2rem; width: 250px; }
+            .stats { font-size: 1rem; margin-top: 15px; }
+            .legend-hud { font-size: 0.85rem; gap: 8px; }
+            .controls { gap: 8px; margin-top: 10px; }
+            button { padding: 6px 10px; font-size: 0.9rem; }
+            .time-presets { gap: 4px; }
+            .time-btn { padding: 4px 6px; font-size: 0.8rem; }
+            .highscore { margin-left: 0; font-size: 0.85rem; margin-top: 8px; flex-basis: 100%; text-align: center; }
+            .settings { width: 90%; max-width: 340px; }
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.4rem; margin-bottom: 5px; }
+            .lang-box { font-size: 0.85rem; margin-bottom: 12px; }
+            select { font-size: 0.85rem; padding: 4px; }
+            #word-display { font-size: 1.4rem; margin-bottom: 10px; }
+            #word-display.sentence-mode { font-size: 0.95rem; padding: 16px 18px; height: 35vh; }
+            input { font-size: 1rem; width: 200px; border-bottom: 1px solid #e2b714; }
+            .stats { font-size: 0.9rem; margin-top: 12px; }
+            .legend-hud { font-size: 0.75rem; gap: 5px; }
+            .controls { gap: 6px; margin-top: 8px; }
+            button { padding: 6px 8px; font-size: 0.8rem; }
+            #start-btn, #restart-btn { padding: 8px 10px; font-size: 0.85rem; }
+            .time-presets { gap: 3px; }
+            .time-btn { padding: 4px 5px; font-size: 0.7rem; }
+            .highscore { margin-left: 0; font-size: 0.75rem; margin-top: 6px; flex-basis: 100%; text-align: center; }
+            .settings { width: 95%; padding: 10px; }
+            .settings-row { font-size: 0.85rem; margin-bottom: 8px; }
+            .settings input[type=range] { width: 120px; }
+            .progress-bar { margin-top: 8px; }
+            .keyboard { margin-top: 12px; }
+            .keyboard .row { gap: 3px; margin-bottom: 6px; }
+        }
         /* progress bar - thin, centered, full width */
         .progress-bar { width: 100%; max-width: 980px; height: 6px; background:#232426; border-radius:6px; margin-top:12px; overflow:hidden; box-shadow: inset 0 -2px rgba(0,0,0,0.35); }
         #progress { height:100%; width:100%; background:linear-gradient(90deg,#e2b714,#ff9f43); transform-origin:left; transition:width 0.3s linear; }
@@ -283,6 +319,5 @@
     .open-btn { position: fixed; right: 14px; bottom: 14px; padding: 10px 12px; border-radius: 8px; border: none; background: var(--accent); color: #111; font-weight: bold; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
     .open-btn.hidden { display: none; }
     </style>
-
 
 
