@@ -1,0 +1,288 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TypeStorm ⚡</title>
+    <style>
+        :root{ --bg:#323437; --text:#d1d0c5; --accent:#e2b714; --muted:#646669; --control-bg:#2c2e31; --key-bg:#232425; --danger:#ca4754; --brightness:1; }
+        .light-theme { --bg:#f9f9f9; --text:#1f1f1f; --accent:#ffb300; --muted:#717171; --control-bg:#ffffff; --key-bg:#f0f0f0; --danger:#d9534f; }
+        body { background: var(--bg); color: var(--text); filter:brightness(var(--brightness)); font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        h1 { color: var(--accent); margin-bottom: 10px; }
+        .lang-box { margin-bottom: 20px; color: var(--muted); }
+        select { background: #2c2e31; color: #e2b714; border: 1px solid #646669; padding: 5px; cursor: pointer; }
+        #word-display { font-size: 2.2rem; margin-bottom: 14px; transition: 0.18s; max-width: 1100px; text-align:left; }
+        /* Sentence mode styling - Monkeytype-like paragraph */
+        #word-display.sentence-mode { max-width: 1000px; height: 44vh; overflow-y: auto; text-align: left; padding: 22px 26px; background: rgba(255,255,255,0.02); border-radius: 10px; font-size: 1.05rem; line-height: 1.6; word-wrap: break-word; box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+        #word-display.sentence-mode .char { font-size: 1.02rem; }
+        #word-display.sentence-mode::-webkit-scrollbar { height:8px; width:10px; }
+        #word-display.sentence-mode::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 6px; }
+        input { background: none; border: none; border-bottom: 2px solid #e2b714; color: #fff; font-size: 1.5rem; text-align: center; outline: none; width: 300px; }
+        .stats { margin-top: 25px; font-size: 1.2rem; color: #646669; }
+        span { color: #e2b714; }
+        .controls { margin-top: 15px; display:flex; gap:10px; align-items:center; }
+        button { background:#e2b714; color:#1f1f1f; border:none; padding:8px 12px; cursor:pointer; border-radius:4px; font-weight:bold; }
+        button:disabled { opacity:0.5; cursor:not-allowed; }
+        .highscore { margin-left:10px; color:#646669; }
+        /* progress bar - thin, centered, full width */
+        .progress-bar { width: 100%; max-width: 980px; height: 6px; background:#232426; border-radius:6px; margin-top:12px; overflow:hidden; box-shadow: inset 0 -2px rgba(0,0,0,0.35); }
+        #progress { height:100%; width:100%; background:linear-gradient(90deg,#e2b714,#ff9f43); transform-origin:left; transition:width 0.3s linear; }
+        .keyboard { margin-top:18px; user-select:none; }
+        .keyboard .row { display:flex; gap:8px; justify-content:center; margin-bottom:8px; }
+        .key { background:#232425; color:#e2b714; min-width:clamp(24px, 6.5vw, 34px); height:clamp(34px, 6.5vw, 44px); display:flex; align-items:center; justify-content:center; border-radius:6px; cursor:pointer; font-weight:bold; box-shadow: inset 0 -3px rgba(0,0,0,0.3); transition: transform 0.08s, background 0.12s; font-size:clamp(0.85rem, 2.8vw, 1rem); }
+        .key:focus { outline:2px solid #e2b714; }
+        .key.space { min-width:clamp(120px, 40vw, 220px); }
+        .key.active { transform: translateY(2px); background:var(--danger); color:#fff; }
+        /* Responsive keyboard scaling */
+        @media (max-width: 768px) {
+          .keyboard .row { gap:6px; }
+          .key { min-width:28px; height:38px; font-size:0.95rem; }
+          .key.space { min-width:160px; }
+        }
+        @media (max-width: 480px) {
+          .keyboard .row { gap:4px; }
+          .key { min-width:24px; height:34px; font-size:0.85rem; }
+          .key.space { min-width:120px; }
+        }
+        .settings { margin-top:12px; background: rgba(255,255,255,0.02); padding:12px; border-radius:8px; width:340px; color:var(--muted); box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
+        .settings-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; }
+        .settings .theme-btn { background:transparent; border:1px solid var(--muted); color:var(--text); padding:6px 8px; border-radius:6px; cursor:pointer; }
+        .settings .theme-btn.active { background:var(--accent); color:#111; border-color:var(--accent); }
+        .settings input[type=range] { width:160px; }
+        .settings label { color:var(--muted); display:flex; align-items:center; gap:6px; }
+        /* character highlighting and caret */
+        .char { display:inline-block; white-space:pre; padding:0 1px; }
+        .char.correct { color: #7ee787; }
+        .char.wrong { color: #ff8d8d; }
+        .caret { display:inline-block; width:2px; background:var(--accent); margin-left:2px; height:1.1em; vertical-align:bottom; animation: blink 1s steps(1) infinite; }
+        @keyframes blink { 50% { opacity:0 } }
+        /* (results modal removed) */
+        .time-presets { display:flex; gap:6px; }
+        .time-btn { background:transparent; border:1px solid var(--muted); color:var(--text); padding:6px 8px; border-radius:6px; cursor:pointer; }
+        .time-btn.active { background:var(--accent); color:#111; border-color:var(--accent); }
+        /* Levels styling */
+        .levels-container { margin-top:12px; }
+        .level-section { padding:10px; border-radius:8px; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.02); min-height:60px; display:flex; flex-direction:column; gap:6px; }
+        .level-section h3 { margin:0; font-size:0.98rem; color:var(--muted); }
+        .level-section .level-text { font-size:0.92rem; color:var(--text); line-height:1.4; max-height:84px; overflow:hidden; }
+        .level-section .level-status { color:var(--muted); font-size:0.85rem; margin-top:auto; }
+        .level-section.completed { opacity:0.6; border-color: rgba(0,0,0,0.18); }
+        .level-section.active { box-shadow: 0 2px 10px rgba(0,0,0,0.3); border-color: var(--accent); }
+        .level-section.failed { border-color: rgba(202,71,84,0.9); background: rgba(202,71,84,0.04); }
+        .legend-hud { font-size:0.95rem; color:var(--muted); display:flex; gap:12px; align-items:center; justify-content:flex-start; }
+        /* tips box */
+        .tips-box { margin-top:16px; padding:10px 12px; background:rgba(226,183,20,0.08); border-left:3px solid var(--accent); border-radius:4px; font-size:0.9rem; color:var(--muted); max-width:520px; line-height:1.5; }
+        .tips-box strong { color:var(--accent); }
+        .tips-box .tip-item { margin-bottom:6px; }
+        .tips-box .tip-item:last-child { margin-bottom:0; }
+        /* themes */
+        .light-theme { --bg:#f9f9f9; --text:#1f1f1f; --accent:#ffb300; --muted:#717171; --control-bg:#ffffff; --key-bg:#f0f0f0; --danger:#d9534f; }
+        .matrix-theme { --bg:#001300; --text:#0f0; --accent:#0f0; --muted:#083; --control-bg:#002200; --key-bg:#002200; --danger:#0f0; }
+        .retro-theme { --bg:#efe1c6; --text:#3b2f2f; --accent:#d35400; --muted:#8a6b4b; --control-bg:#f6e7d1; --key-bg:#f1ddb7; --danger:#d35400; }
+        /* hide footer and developed elements */
+        .footer, [class*="developed"], [id*="developed"] { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="game-container" class="game-container">
+    <button id="close-game" class="close-btn" aria-label="Close game">✕</button>
+    <h1>⚡ TypeStorm ⚡</h1>
+    
+    <div class="lang-box">
+        Select Language: 
+        <select id="lang" onchange="changeLanguage()">
+            <option value="english" selected>English</option>
+            <option value="china">China</option>
+            <option value="india">India</option>
+            <option value="russian">Russian</option>
+            <option value="hebrew">Hebrew</option>
+        </select>
+    </div>
+
+    <div id="word-display" aria-live="polite" aria-atomic="true"></div>
+    <div id="lyrics-display" class="lyrics-display hidden" aria-hidden="true"></div>
+
+    <!-- Levels: split text into 5 sections -->
+    <div id="levels-container" class="levels-container" style="display:none; margin-top:12px;">
+      <h2 style="margin:0 0 8px 0; color:var(--muted); font-size:1rem">Levels</h2>
+
+      <div style="margin-bottom:8px; display:flex; gap:8px; align-items:flex-start;">
+        <textarea id="levels-textarea" placeholder="Paste/enter text here to split into 5 sequential levels" style="flex:1; min-height:74px; background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.04); padding:8px; border-radius:6px;">increase still open he hald face program then each thing both would into man much get lead than course other another little year that now or consider find use line can ive up play another one mean own turn up become head public find and place make help here where real at one will by develop say out mean both person work get some nation such show around stand head then go against house follow would not could man want most man course order develop form much interest govern problem give through early lead over system present old right state without part house case leave show around nation group hand large another world</textarea>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button id="split-text-btn">Split Text Into 5 Levels</button>
+          <button id="start-levels-btn">Start Levels</button>
+        </div>
+      </div>
+
+      <div class="levels-list" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:8px;">
+        <div class="level-section" data-level="0"><h3>Level 1</h3><div class="level-text"></div><div class="level-status">Incomplete</div></div>
+        <div class="level-section" data-level="1"><h3>Level 2</h3><div class="level-text"></div><div class="level-status">Incomplete</div></div>
+        <div class="level-section" data-level="2"><h3>Level 3</h3><div class="level-text"></div><div class="level-status">Incomplete</div></div>
+        <div class="level-section" data-level="3"><h3>Level 4</h3><div class="level-text"></div><div class="level-status">Incomplete</div></div>
+        <div class="level-section" data-level="4"><h3>Level 5</h3><div class="level-text"></div><div class="level-status">Incomplete</div></div>
+      </div>
+    </div>
+
+    <input type="text" id="input-field" autocomplete="off">
+
+    <!-- audio player (hidden controls by default; visible when needed) -->
+    <audio id="audio-player" preload="metadata"></audio>
+
+    <div class="stats">
+  WPM: <span id="wpm">0</span> |
+  Last: <span id="last-score">0</span> |
+  Time: <span id="timer">60</span>s |
+  Mode: <span id="mode">Normal</span>
+</div>
+<div id="legend-hud" class="legend-hud" style="margin-top:8px; color:var(--muted);">WPM: <span id="legend-wpm">0</span> • Accuracy: <span id="legend-accuracy">100</span>% • Level: <span id="legend-level">-</span></div>
+
+    <div class="controls">
+        <button id="start-btn">Start</button>
+        <button id="restart-btn" disabled>Restart</button>
+        <div class="time-presets">
+            <button class="time-btn active" data-seconds="15">15s</button>
+            <button class="time-btn" data-seconds="30">30s</button>
+            <button class="time-btn" data-seconds="60">60s</button>
+            <button class="time-btn" data-seconds="120">120s</button>
+        </div>
+        <button id="mode-btn">Mode: Word</button>
+        <button id="practice-btn">Practice</button>
+        <button id="start-levels-btn">Start Levels</button>
+        <button id="settings-btn">⚙️ Settings</button>
+        <div class="highscore">Personal Best: <span id="highscore">0</span> WPM</div>
+    </div>
+
+    <div class="progress-bar"><div id="progress" style="width:100%"></div></div>
+
+    <div class="keyboard" aria-hidden="false">
+  <div class="row">
+    <div class="key" data-key="q">Q</div>
+    <div class="key" data-key="w">W</div>
+    <div class="key" data-key="e">E</div>
+    <div class="key" data-key="r">R</div>
+    <div class="key" data-key="t">T</div>
+    <div class="key" data-key="y">Y</div>
+    <div class="key" data-key="u">U</div>
+    <div class="key" data-key="i">I</div>
+    <div class="key" data-key="o">O</div>
+    <div class="key" data-key="p">P</div>
+  </div>
+
+  <div class="row">
+    <div class="key" data-key="a">A</div>
+    <div class="key" data-key="s">S</div>
+    <div class="key" data-key="d">D</div>
+    <div class="key" data-key="f">F</div>
+    <div class="key" data-key="g">G</div>
+    <div class="key" data-key="h">H</div>
+    <div class="key" data-key="j">J</div>
+    <div class="key" data-key="k">K</div>
+    <div class="key" data-key="l">L</div>
+  </div>
+
+  <div class="row">
+    <div class="key" data-key="z">Z</div>
+    <div class="key" data-key="x">X</div>
+    <div class="key" data-key="c">C</div>
+    <div class="key" data-key="v">V</div>
+    <div class="key" data-key="b">B</div>
+    <div class="key" data-key="n">N</div>
+    <div class="key" data-key="m">M</div>
+  </div>
+
+  <div class="row">
+    <div class="key space" data-key=" ">SPACE</div>
+  </div>
+</div>
+
+</div>
+
+<button id="open-game" class="open-btn hidden" aria-label="Open game">Open Typing</button>
+
+    <div class="settings" id="settings-panel" hidden>
+        <div class="settings-row">
+            <div>Display</div>
+            <div>
+                <button class="theme-btn" id="theme-dark">Dark</button>
+                <button class="theme-btn" id="theme-light">Light</button>
+                <button class="theme-btn" id="theme-matrix">Matrix</button>
+                <button class="theme-btn" id="theme-retro">Retro</button>
+            </div>
+        </div>
+        <div class="settings-row">
+            <div>Brightness</div>
+            <input type="range" id="brightness" min="0.5" max="1.4" step="0.05" value="1">
+        </div>
+        <div class="settings-row">
+            <div>Sounds</div>
+            <label><input type="checkbox" id="sounds"> Enable</label>
+        </div>
+        <div class="settings-row">
+            <div>Vibration</div>
+            <label><input type="checkbox" id="vibration"> Enable</label>
+        </div>
+        <div class="settings-row">
+            <div>Ghost Typing</div>
+            <div>
+                <label style="display:flex; align-items:center; gap:8px;"><input type="checkbox" id="ghost-mode"> Enable</label>
+            </div>
+        </div>
+        <div class="settings-row">
+            <div>Ghost Speed (WPM)</div>
+            <div><input type="number" id="ghost-wpm" min="20" max="300" step="5" value="80" style="width:80px"></div>
+        </div>
+        <div class="settings-row">
+            <div>Ghost Accuracy (%)</div>
+            <div><input type="number" id="ghost-accuracy" min="80" max="100" step="1" value="96" style="width:80px"></div>
+        </div>
+        <div class="settings-row">
+            <div>Sudden Death</div>
+            <div><label><input type="checkbox" id="sudden-death"> Stop on first mistake</label></div>
+        </div>
+        <div class="settings-row">
+            <div>Weak words</div>
+            <div><button id="clear-weak">Clear Weak Words</button></div>
+        </div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 12px; padding-top: 12px;">
+            <div style="color: var(--accent); font-weight: bold; margin-bottom: 8px;">💡 Tips:</div>
+            <div style="font-size: 0.85rem; color: var(--muted); line-height: 1.4;">
+                <div>• Press <strong>TAB</strong> to quick restart</div>
+                <div>• Pick a time preset (15s, 30s, 60s, 120s)</div>
+                <div>• Use <strong>Sentence Mode</strong> for realistic typing</div>
+                <div>• Focus on <strong>accuracy</strong> first, speed follows</div>
+                <div>• Track weak words and practice them</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer: Privacy and Credits -->
+    <footer class="footer" style="margin-top:12px; width:100%; max-width:1100px; display:flex; gap:12px; align-items:center; justify-content:space-between;">
+      <div style="color:var(--muted);">
+        <a href="#" id="privacy-link">Privacy Policy</a>
+      </div>
+      <div style="color:var(--muted); display:flex; gap:8px; align-items:center;">
+        <!-- license/credits removed — replaced with direct credit below -->
+      </div>
+    </footer>
+
+    <!-- Privacy overlay -->
+    <div id="privacy-overlay" class="overlay hidden" style="display:none; position:fixed; inset:0; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:200;">
+      <div class="overlay-inner" style="background:var(--control-bg); padding:18px; border-radius:10px; max-width:700px; color:var(--text); position:relative;">
+        <button id="close-privacy" class="overlay-close" style="position:absolute; right:18px; top:12px; font-size:1.2rem; background:transparent; border:0; color:var(--muted); cursor:pointer">✕</button>
+        <h2>Privacy Policy</h2>
+        <p>This app does not collect user data. All settings are stored locally in your browser's localStorage. To publish to an app store, ensure you comply with store policies.</p>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+    <style>
+    /* game container close/open styles */
+    .game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 95%; max-width: 1000px; margin: 0 auto; position: relative; }
+    .close-btn { position: absolute; top: 8px; right: 8px; background: transparent; border: none; color: var(--muted); font-size: 20px; cursor: pointer; padding: 6px; }
+    .close-btn:hover { color: var(--accent); }
+    .open-btn { position: fixed; right: 14px; bottom: 14px; padding: 10px 12px; border-radius: 8px; border: none; background: var(--accent); color: #111; font-weight: bold; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
+    .open-btn.hidden { display: none; }
+    </style>
+
+
+
